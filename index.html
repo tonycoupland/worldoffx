@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>World of FX</title>
+
+    <!-- Custom CSS -->
+    <link href="css/main.css" rel="stylesheet">
+
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <!-- Page Content -->
+    <div class="container" ng-app="myApp" ng-controller="myCtrl">
+        <div id="imageholder">
+          <!-- <object type="image/svg+xml" id="worldimage" data="images\world.svg"/> -->
+        </div>
+
+        <div class="footer">
+          <p>Map image from <a href="https://www.amcharts.com/svg-maps/" target="blank">amcharts.com</a>. FX rates from <a href="https://developer.yahoo.com/yql/console/?q=show%20tables&env=store://datatables.org/alltableswithkeys#h=select%20*%20from%20yahoo.finance.xchange%20where%20pair%20in%20%28%22USDMXN%22%2C%20%22USDCHF%22%29" target="blank">Yahoo Finance API</a>.
+             Copyright &copy; Tony Coupland 2017</p>
+        </div>
+
+    </div>
+
+    <script type="text/javascript">
+
+    $(function(){
+
+      // Every x seconds request rates from API.
+      // Store rates in queue and cap queue to (15mins / refresh rate) therefore head of queue is
+      // at most 15 mins old.
+      // Recolour all countries using percentage change in rate over last 15 minutes.
+
+      // Data object for currency code to country list
+      var currencies =
+      {
+        'AED': {'countries':['United Arab Emirates'], 'rates':[]},
+        'AFN': {'countries':['Afghanistan'], 'rates':[]},
+        'ALL': {'countries':['Albania'], 'rates':[]},
+        'AMD': {'countries':['Armenia'], 'rates':[]},
+        'AOA': {'countries':['Angola'], 'rates':[]},
+        'ARS': {'countries':['Argentina'], 'rates':[]},
+        'AUD': {'countries':['Australia'], 'rates':[]},
+        'AZN': {'countries':['Azerbaijan'], 'rates':[]},
+        'BAM': {'countries':['Bosnia and Herzegovina'], 'rates':[]},
+        'BDT': {'countries':['Bangladesh'], 'rates':[]},
+        'BGN': {'countries':['Bulgaria'], 'rates':[]},
+        'BIF': {'countries':['Burundi'], 'rates':[]},
+        'BND': {'countries':['Brunei Darussalam'], 'rates':[]},
+        'BOB': {'countries':['Bolivia'], 'rates':[]},
+        'BRL': {'countries':['Brazil'], 'rates':[]},
+        'BSD': {'countries':['Bahamas'], 'rates':[]},
+        'BTN': {'countries':['Bhutan'], 'rates':[]},
+        'BWP': {'countries':['Botswana'], 'rates':[]},
+        'BYR': {'countries':['Belarus'], 'rates':[]},
+        'BZD': {'countries':['Belize'], 'rates':[]},
+        'CAD': {'countries':['Canada'], 'rates':[]},
+        'CDF': {'countries':['Democratic Republic of Congo'], 'rates':[]},
+        'CHF': {'countries':['Switzerland'], 'rates':[]},
+        'CLP': {'countries':['Chile'], 'rates':[]},
+        'CNY': {'countries':['China'], 'rates':[]},
+        'COP': {'countries':['Colombia'], 'rates':[]},
+        'CRC': {'countries':['Costa Rica'], 'rates':[]},
+        'CUP': {'countries':['Cuba'], 'rates':[]},
+        'CZK': {'countries':['Czech Republic'], 'rates':[]},
+        'DJF': {'countries':['Djibouti'], 'rates':[]},
+        'DKK': {'countries':['Denmark'], 'rates':[]},
+        'DOP': {'countries':['Dominican Republic'], 'rates':[]},
+        'DZD': {'countries':['Algeria'], 'rates':[]},
+        'ECS': {'countries':['Ecuador'], 'rates':[]},
+        'EGP': {'countries':['Egypt'], 'rates':[]},
+        'ERN': {'countries':['Eritrea'], 'rates':[]},
+        'ETB': {'countries':['Ethiopia'], 'rates':[]},
+        'EUR': {'countries':['Austria','Belgium','Cyprus','Estonia','Finland','France','Germany','Greece','Ireland','Italy','Latvia','Lithuania','Luxembourg','Malta','Netherlands','Portugal','Slovakia','Slovenia','Spain'], 'rates':[]},
+        'FJD': {'countries':['Fiji'], 'rates':[]},
+        'FKP': {'countries':['Falkland Islands'], 'rates':[]},
+        'GBP': {'countries':['United Kingdom'], 'rates':[]},
+        'GEL': {'countries':['Georgia'], 'rates':[]},
+        'GHS': {'countries':['Ghana'], 'rates':[]},
+        'GMD': {'countries':['Gambia'], 'rates':[]},
+        'GNF': {'countries':['Guinea'], 'rates':[]},
+        'GTQ': {'countries':['Guatemala'], 'rates':[]},
+        'GYD': {'countries':['Guyana'], 'rates':[]},
+        'HNL': {'countries':['Honduras'], 'rates':[]},
+        'HRK': {'countries':['Croatia'], 'rates':[]},
+        'HTG': {'countries':['Haiti'], 'rates':[]},
+        'HUF': {'countries':['Hungary'], 'rates':[]},
+        'IDR': {'countries':['Indonesia'], 'rates':[]},
+        'ILS': {'countries':['Israel'], 'rates':[]},
+        'INR': {'countries':['India'], 'rates':[]},
+        'IQD': {'countries':['Iraq'], 'rates':[]},
+        'IRR': {'countries':['Iran'], 'rates':[]},
+        'ISK': {'countries':['Iceland'], 'rates':[]},
+        'JMD': {'countries':['Jamaica'], 'rates':[]},
+        'JOD': {'countries':['Jordan'], 'rates':[]},
+        'JPY': {'countries':['Japan'], 'rates':[]},
+        'KES': {'countries':['Kenya'], 'rates':[]},
+        'KGS': {'countries':['Kyrgyzstan'], 'rates':[]},
+        'KHR': {'countries':['Cambodia'], 'rates':[]},
+        'KPW': {'countries':['North Korea'], 'rates':[]},
+        'KRW': {'countries':['South Korea'], 'rates':[]},
+        'KWD': {'countries':['Kuwait'], 'rates':[]},
+        'KZT': {'countries':['Kazakhstan'], 'rates':[]},
+        'LAK': {'countries':['Lao Peoples Democratic Republic'], 'rates':[]},
+        'LBP': {'countries':['Lebanon'], 'rates':[]},
+        'LKR': {'countries':['Sri Lanka'], 'rates':[]},
+        'LRD': {'countries':['Liberia'], 'rates':[]},
+        'LSL': {'countries':['Lesotho'], 'rates':[]},
+        'LYD': {'countries':['Libya'], 'rates':[]},
+        'MAD': {'countries':['Morocco'], 'rates':[]},
+        'MDL': {'countries':['Moldova'], 'rates':[]},
+        'MKD': {'countries':['Macedonia'], 'rates':[]},
+        'MMK': {'countries':['Myanmar'], 'rates':[]},
+        'MNT': {'countries':['Mongolia'], 'rates':[]},
+        'MRO': {'countries':['Mauritania'], 'rates':[]},
+        'MWK': {'countries':['Malawi'], 'rates':[]},
+        'MXN': {'countries':['Mexico'], 'rates':[]},
+        'MYR': {'countries':['Malaysia'], 'rates':[]},
+        'MZN': {'countries':['Mozambique'], 'rates':[]},
+        'NAD': {'countries':['Namibia'], 'rates':[]},
+        'NGN': {'countries':['Nigeria'], 'rates':[]},
+        'NIO': {'countries':['Nicaragua'], 'rates':[]},
+        'NOK': {'countries':['Norway'], 'rates':[]},
+        'NPR': {'countries':['Nepal'], 'rates':[]},
+        'NZD': {'countries':['New Zealand'], 'rates':[]},
+        'OMR': {'countries':['Oman'], 'rates':[]},
+        'PAB': {'countries':['Panama'], 'rates':[]},
+        'PEN': {'countries':['Peru'], 'rates':[]},
+        'PGK': {'countries':['Papua New Guinea'], 'rates':[]},
+        'PHP': {'countries':['Philippines'], 'rates':[]},
+        'PKR': {'countries':['Pakistan'], 'rates':[]},
+        'PLN': {'countries':['Poland'], 'rates':[]},
+        'PYG': {'countries':['Paraguay'], 'rates':[]},
+        'QAR': {'countries':['Qatar'], 'rates':[]},
+        'RON': {'countries':['Romania'], 'rates':[]},
+        'RSD': {'countries':['Serbia'], 'rates':[]},
+        'RUB': {'countries':['Russia'], 'rates':[]},
+        'RWF': {'countries':['Rwanda'], 'rates':[]},
+        'SAR': {'countries':['Saudi Arabia'], 'rates':[]},
+        'SBD': {'countries':['Solomon Islands'], 'rates':[]},
+        'SDG': {'countries':['Sudan'], 'rates':[]},
+        'SEK': {'countries':['Sweden'], 'rates':[]},
+        'SLL': {'countries':['Sierra Leone'], 'rates':[]},
+        'SOS': {'countries':['Somalia'], 'rates':[]},
+        'SRD': {'countries':['Suriname'], 'rates':[]},
+        'SVC': {'countries':['El Salvador'], 'rates':[]},
+        'SYP': {'countries':['Syria'], 'rates':[]},
+        'SZL': {'countries':['Swaziland'], 'rates':[]},
+        'THB': {'countries':['Thailand'], 'rates':[]},
+        'TJS': {'countries':['Tajikistan'], 'rates':[]},
+        'TMT': {'countries':['Turkmenistan'], 'rates':[]},
+        'TND': {'countries':['Tunisia'], 'rates':[]},
+        'TRY': {'countries':['Turkey'], 'rates':[]},
+        'TTD': {'countries':['Trinidad and Tobago'], 'rates':[]},
+        'TWD': {'countries':['Taiwan'], 'rates':[]},
+        'TZS': {'countries':['Tanzania'], 'rates':[]},
+        'UAH': {'countries':['Ukraine'], 'rates':[]},
+        'UGX': {'countries':['Uganda'], 'rates':[]},
+        'USD': {'countries':['United States'], 'rates':[]},
+        'UYU': {'countries':['Uruguay'], 'rates':[]},
+        'UZS': {'countries':['Uzbekistan'], 'rates':[]},
+        'VEF': {'countries':['Venezuela'], 'rates':[]},
+        'VND': {'countries':['Vietnam'], 'rates':[]},
+        'VUV': {'countries':['Vanuatu'], 'rates':[]},
+        'XAF': {'countries':['Central African Republic'], 'rates':[]},
+        'YER': {'countries':['Yemen'], 'rates':[]},
+        'ZAR': {'countries':['South Africa'], 'rates':[]},
+        'ZMW': {'countries':['Zambia'], 'rates':[]},
+        'ZWL': {'countries':['Zimbabwe'], 'rates':[]}
+      };
+
+      var colourMid = h2r('#484848');
+      var colourDown = h2r('#CC3333');
+      var colourUp = h2r('#13A044');
+
+
+      // FX Rate Refresh Frequency
+      var refreshFrequency = 10; // seconds
+
+      // Poll for new rates
+      requestLatestFXRates();
+      setInterval(function(){requestLatestFXRates();}, (refreshFrequency*1000));
+
+      function getYahooQueryURL(){
+        // Build list of all currencies that we're interested in compared to USD base
+        var usdCurrencyPairs = Object.keys(currencies).map(function(ccy){return 'USD'+ccy;}).join("'%2C'");
+        // Construct query URL
+        return "https://query.yahooapis.com/v1/public/yql?q=select%20id%2C%20Rate%2C%20Date%2C%20Time%20from%20yahoo.finance.xchange%20where%20pair%20in%20('"+usdCurrencyPairs+"')&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=";
+      }
+
+      function requestLatestFXRates(){
+        // Query from Yahoo finance the latest FX rates for our currency pairs
+        $.getJSON( getYahooQueryURL(), function( data ) {
+          var resultsTable = data.query.results.rate;
+          for ( var n=0;n<resultsTable.length;n++){
+            var rate = resultsTable[n];
+
+            // Update our rates
+            var ccy = rate.id.slice(3,6);
+            var currency = currencies[ccy];
+            currency.rates.push(rate.Rate);
+
+            // Trim currency rates if there are more that 15mins worth
+            if ( currency.rates.length > (900 / refreshFrequency)){
+              currency.rates.shift();
+            }
+
+            // Update UI
+            //  Calculate the colour for this country
+            var percentageChange = 0;
+            if ( currency.rates[0] != 0){
+              var diff = currency.rates[currency.rates.length-1] - currency.rates[0];
+              percentageChange = Math.abs(diff / currency.rates[0]);
+            }
+            var newColour = interpolateColor(
+              colourMid,
+              (currency.rates[currency.rates.length-1] < currency.rates[0] ? colourDown : colourUp),
+              250*percentageChange
+            );
+
+            for ( var m=0;m<currency.countries.length;m++){
+              setCountryColourAndToolTip(currency.countries[m], r2h(newColour), rate.id + ' from ' + currency.rates[0] + ' to ' + currency.rates[currency.rates.length-1]);
+            }
+          }
+        });
+      }
+
+      function setCountryColourAndToolTip(country, colour, tooltip){
+        // Set colour
+        $("path[title='"+country+"']")
+          .css("fill", colour)
+          .html("<title>" + tooltip + "</title>");
+      }
+
+      // Converts a #ffffff hex string into an [r,g,b] array and reverse
+      function h2r(hex) {
+          var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result ? [
+              parseInt(result[1], 16),
+              parseInt(result[2], 16),
+              parseInt(result[3], 16)
+          ] : null;
+      };
+      function r2h(rgb) {
+          return "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+      };
+
+      // Interpolates two [r,g,b] colors and returns an [r,g,b] of the result
+      // Taken from the ROT.js roguelike dev library at
+      // https://github.com/ondras/rot.js
+      function interpolateColor(color1, color2, factor) {
+        if (arguments.length < 3) { factor = 0.5; }
+        factor = Math.max(0,Math.min(1, factor));
+        var result = color1.slice();
+        for (var i=0;i<3;i++) {
+          result[i] = Math.round(result[i] + factor*(color2[i]-color1[i]));
+        }
+        return result;
+      };
+
+      // Load world image using XMLHTTPRequest
+      $.get("images/world.svg",
+      function(svgDoc){
+        // Import contents of the svg document into this document
+        var importedSVGRootElement = document.importNode(svgDoc.documentElement,true);
+        // Append the imported SVG root element to the appropriate HTML element
+        $("#imageholder").html(importedSVGRootElement);
+
+      },
+      "xml");
+
+
+
+    });
+
+    </script>
+</body>
+
+</html>

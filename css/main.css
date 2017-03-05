@@ -1,0 +1,31 @@
+/*!
+ * Start Bootstrap - 1 Col Portfolio (http://startbootstrap.com/)
+ * Copyright 2013-2016 Start Bootstrap
+ * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap/blob/gh-pages/LICENSE)
+ */
+
+body {
+  font-family: sans-serif;
+  width:100%; height:100%;
+  background-color: #111133;
+  overflow-x:hidden;
+  overflow-y:hidden
+}
+
+.footer {
+  color: #666666;
+  font-size: 0.6em;
+  position: fixed;
+  height:22px;bottom:0;
+}
+
+#imageholder {
+  position: fixed;
+  top:0; left:0; right:0; bottom:22px;
+}
+
+#imageholder svg {
+  /*position: fixed;
+  top:0; left:0; right:0; bottom:0;*/
+  width:100%; height:100%;
+}
